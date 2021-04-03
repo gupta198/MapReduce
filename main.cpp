@@ -5,29 +5,48 @@
 #include <queue>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
+queue<string> words;
+
+void Reader(ifstream *file) {
+	string text;
+
+	while (std::getline(*file, text)) {
+		words.push(text);
+	}
+	file->close();
+}
+
+unordered_map<string, int> Mapper() {
+	unordered_map<string, int> map;
+	while (!words.empty())
+	{
+		string wrd;
+		stringstream iss(words.front());
+		while (iss >> wrd)
+		{
+			map[wrd]++;
+		}
+		words.pop();
+
+	}
+
+	return map;
+}
 
 int main(int argc, char **argv) {
-    unordered_map<string, int> map;
-    queue<string> words;
     ifstream file;
     file.open("files/1.txt");
  
-    string text;
-    while (file >> text) {
-        words.push(text);
-    }
-    file.close();
-
-    while (!words.empty()) {
-        string word = words.front();
-        words.pop();
-        map[word]++;
-    }
-
-    /*for (auto x : map) {
+	Reader(&file);
+	cout << words.size();
+	unordered_map<string, int> map = Mapper();
+    for (auto x : map) {
         cout << x.first << ": " << x.second << endl;
-    }*/
+    }
     cout << "Map length: " << map.size() << endl;
+
 }
+
