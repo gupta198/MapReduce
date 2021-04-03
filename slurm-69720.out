@@ -1,0 +1,6 @@
+*** Error in `./main': double free or corruption (fasttop): 0x00002b99f8002e40 ***
+======= Backtrace: =========
+/usr/lib64/libc.so.6(+0x81299)[0x2b99d7db1299]
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+/var/spool/slurm/job69720/slurm_script: line 7:  9189 Aborted                 ./main
