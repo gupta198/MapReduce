@@ -44,7 +44,7 @@ unordered_map<string, int> Mapper(queue<string> *words) {
 
 void ReduceMapper(unordered_map<string,int> *map, unordered_map<string, int> *masterMap) {
    for (auto i : *map) {
-      #pragma omp critical
+      #pragma omp atomic
       (*masterMap)[i.first] += i.second;
    }
 }
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
    double time = -omp_get_wtime();
 
    //1 reader per file
-   #pragma omp parallel for nowait
+   #pragma omp parallel for //nowait
    for (int i = 1; i <= NUM_FILES; i++) {
       //cout << i << ".txt is running." << endl;
       //cout << omp_get_thread_num() << endl;
