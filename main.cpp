@@ -50,12 +50,27 @@ void ReduceMapper(unordered_map<string,int> *map, unordered_map<string, int> *ma
    }
 }
 
-MPI_Datatype makeType(int mapSize ) {
-   MPI_Datatype block;
-   MPI_Type_struct(2, 1, 0,
-   MPI_Type_vector(LOCAL_ARRAY_ROWS, LOCAL_ARRAY_COLS, 0, MPI_DOUBLE, &block);
-   MPI_Type_commit(&block);
-   return block;
+//Takes in a map and a pointer to a string and int array
+//and converts the map to those arrays. Function will return nothing
+void createArrFromMap(unordered_map<string, int> map, char **strArr, int *intArr) {
+   int n = 0;
+
+   for (auto i : map) {
+      strArr[n] = (char *)i.first.c_str();
+      intArr[n] = i.second;
+      n++;
+   }
+}
+
+unordered_map<string, int> reconstructMap(char **strMap, int *intMap, int mapSize) {
+   unordered_map<string, int> map;
+
+   for (int i = 0; i < mapSize; i++) {
+       string str(strMap[i]);
+       map[str] = intMap[i];
+   } 
+
+   return map;
 }
 
 int main(int argc, char **argv) {
@@ -69,6 +84,7 @@ int main(int argc, char **argv) {
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &numP);
    MPI_Comm_rank(MPI_COMM_WORLD, &pid);
+   //cout << "numP = " << numP << endl;
 
    double time = -omp_get_wtime();
    int numToProc;
@@ -136,30 +152,45 @@ int main(int argc, char **argv) {
       MPI_Isend(&map, 1, sizeof(unordered_map<string, int>)
    }*/
    //barrier
-   cout << "execution time: " << time+omp_get_wtime() << endl;
    #pragma omp parallel for
    for (int i = 0; i < NUM_MAPS; i++) {
       ReduceMapper(&map[i], &masterMap);
    }
+   cout << "PID: " << pid << endl;
    cout << "Master Map length: " << masterMap.size() << endl;
-   cout << "Execution time: " << time+omp_get_wtime() << endl;
+   cout << "Execution time: " << time+omp_get_wtime() << endl << endl;
 
    if (pid != 0) {
       int mapSize = masterMap.size();
+      char **strMap = (char **)malloc(mapSize * sizeof(char *));
+      int *intMap = (int *)malloc(mapSize * sizeof(int));
+      createArrFromMap(masterMap, strMap, intMap);
+
+
       MPI_Request req;
       MPI_Isend(&mapSize, 1, MPI_INT, 0, pid, MPI_COMM_WORLD, &req);
-      MPI_Isend(&masterMap, 1, sizeof(unordered_map<string, int>) * masterMap.size(), 0, pid, MPI_COMM_WORLD, &req);
+      MPI_Isend(strMap, masterMap.size(), MPI_CHAR, 0, pid, MPI_COMM_WORLD, &req);
+      MPI_Isend(intMap, masterMap.size(), MPI_INT, 0, pid, MPI_COMM_WORLD, &req);
    } else {
       //#pragma omp parallel for
-      for (int i = 1; i <= numP; i++) {
+      for (int i = 1; i < numP; i++) {
          int mapSize;
+         char **strMap;
+         int *intMap;
          MPI_Request req;
          MPI_Irecv(&mapSize, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
-         unordered_map<string, int> map;
-         MPI_Irecv(&map, 1, sizeof(unordered_map<string, int>) * mapSize, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         MPI_Irecv(strMap, mapSize, MPI_CHAR, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         MPI_Irecv(intMap, mapSize, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+
+         unordered_map<string, int> map = reconstructMap(strMap, intMap, mapSize);
+         free(strMap);
+         free(intMap);
          ReduceMapper(&map, &masterMap);
       }
    }
+   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Finalize();
+   cout << "PID: " << pid << endl;
    cout << "Final Master Map length: " << masterMap.size() << endl;
    cout << "Final Execution time: " << time+omp_get_wtime() << endl;
 
