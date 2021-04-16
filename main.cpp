@@ -24,6 +24,7 @@ void Reader(string fileName, queue<string> *words) {
 }
 
 unordered_map<string, int> Mapper(queue<string> *words) {
+   cout << words->size() << endl;
    unordered_map<string, int> map;
    while (!words->empty()) {
       string wrd;
@@ -51,26 +52,57 @@ void ReduceMapper(unordered_map<string,int> *map, unordered_map<string, int> *ma
 }
 
 //Takes in a map and a pointer to a string and int array
-//and converts the map to those arrays. Function will return nothing
-void createArrFromMap(unordered_map<string, int> map, char **strArr, int *intArr) {
+//and converts the map to those arrays. Function will return total number of bytes
+int createArrFromMap(unordered_map<string, int> map, char *strArr, int *intArr) {
+   int numBytes = 0;
    int n = 0;
 
    for (auto i : map) {
-      strArr[n] = (char *)i.first.c_str();
-      intArr[n] = i.second;
-      n++;
+      char *word = (char *)i.first.c_str();
+      memcpy(&(strArr[numBytes]), word, i.first.length() + 1);
+      intArr[n++] = i.second;
+      numBytes += i.first.length() + 1;
+   }
+   return numBytes;
+}
+
+unordered_map<string, int> reconstructMap(char *strMap, int *intMap, int len) {
+   unordered_map<string, int> map;
+   int n = 0;
+   stringstream buff;
+   string str;
+
+   for (int i = 0, j = 0; i < len; i++, j++) {
+      //buff << strMap[i];
+      //buff >> str;
+      if (strMap[i] != '\0') {
+         str.push_back(strMap[i]);
+      } else { 
+         //cout << str << " ";
+         j = -1;
+         map[str] = intMap[n++];
+         //buff.str("");
+         str = "";
+      }
+   }
+
+   return map;
+}
+
+void Print1D(char *str, int len) {
+   for (int i = 0; i < len; i++) {
+      if (str[i] == '\0') {
+         cout << " ";
+         continue;
+      }
+      cout << str[i];
    }
 }
 
-unordered_map<string, int> reconstructMap(char **strMap, int *intMap, int mapSize) {
-   unordered_map<string, int> map;
-
-   for (int i = 0; i < mapSize; i++) {
-       string str(strMap[i]);
-       map[str] = intMap[i];
-   } 
-
-   return map;
+void PrintArr(char **arr, int len) {
+   for (int i = 0; i < len; i++) {
+      cout << arr[i] << " ";
+   }
 }
 
 int main(int argc, char **argv) {
@@ -121,17 +153,20 @@ int main(int argc, char **argv) {
    for (int i = numToProc * pid + 1; i < numToProc * (pid + 1) + 1; i++) {
       //cout << i << ".txt is running." << endl;
       //cout << omp_get_thread_num() << endl;
+      //#pragma omp critical
+      //cout << "PID " << pid << " :" << i << endl; 
       ostringstream stream;
-      stream << "files/" << i << ".txt";
+      stream << "files/" << 15 - i << ".txt";
       string filename = stream.str();
       Reader(filename, &words);
       //cout << "lines in queue: " << words.size() << endl;
    }
    if (pid == 0) {
-      for (int i = (numP - 1) * numToProc + 1; i <= NUM_FILES; i++) {
+      for (int i = numP * numToProc + 1; i <= NUM_FILES; i++) {
          ostringstream stream;
-         stream << "files/" << i << ".txt";
+         stream << "files/" << 15 - i << ".txt";
          string filename = stream.str();
+         //cout << filename << endl;
          Reader(filename, &words);
       }
    }
@@ -162,27 +197,37 @@ int main(int argc, char **argv) {
 
    if (pid != 0) {
       int mapSize = masterMap.size();
-      char **strMap = (char **)malloc(mapSize * sizeof(char *));
+      char *strMap = (char *)malloc(15 * mapSize * sizeof(char));
       int *intMap = (int *)malloc(mapSize * sizeof(int));
-      createArrFromMap(masterMap, strMap, intMap);
-
+      int strMapLength = createArrFromMap(masterMap, strMap, intMap);
 
       //MPI_Request req;
       MPI_Send(&mapSize, 1, MPI_INT, 0, pid, MPI_COMM_WORLD);
-      MPI_Send(strMap, masterMap.size(), MPI_CHAR, 0, pid, MPI_COMM_WORLD);
+      MPI_Send(&strMapLength, 1, MPI_INT, 0, pid, MPI_COMM_WORLD);
+      MPI_Send(strMap, strMapLength, MPI_CHAR, 0, pid, MPI_COMM_WORLD);
       MPI_Send(intMap, masterMap.size(), MPI_INT, 0, pid, MPI_COMM_WORLD);
+      free(strMap);
+      free(intMap);
    } else {
       //#pragma omp parallel for
       for (int i = 1; i < numP; i++) {
          int mapSize;
-         char **strMap;
-         int *intMap;
+         int strMapLength;
+         char *strMap;
          MPI_Status req;
          MPI_Recv(&mapSize, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
-         MPI_Recv(strMap, mapSize, MPI_CHAR, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         MPI_Recv(&strMapLength, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         strMap = (char *)malloc(strMapLength * sizeof(char));
+         MPI_Recv(strMap, strMapLength, MPI_CHAR, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         int *intMap = (int *)malloc(mapSize * sizeof(int));
          MPI_Recv(intMap, mapSize, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
 
-         unordered_map<string, int> map = reconstructMap(strMap, intMap, mapSize);
+         //Print1D(strMap, strMapLength);
+         
+         unordered_map<string, int> map = reconstructMap(strMap, intMap, strMapLength);
+         /*for (auto i : map) {
+            cout << i.first << ": " << i.second << endl;
+         }*/
          free(strMap);
          free(intMap);
          ReduceMapper(&map, &masterMap);
@@ -191,6 +236,9 @@ int main(int argc, char **argv) {
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
    if (pid == 0){
+      /*for (auto i : masterMap) {
+         cout << i.first << ": " << i.second << endl;
+      }*/
      cout << "PID: " << pid << endl;
      cout << "Final Master Map length: " << masterMap.size() << endl;
      cout << "Final Execution time: " << time+omp_get_wtime() << endl;
