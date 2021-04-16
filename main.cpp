@@ -167,20 +167,20 @@ int main(int argc, char **argv) {
       createArrFromMap(masterMap, strMap, intMap);
 
 
-      MPI_Request req;
-      MPI_Isend(&mapSize, 1, MPI_INT, 0, pid, MPI_COMM_WORLD, &req);
-      MPI_Isend(strMap, masterMap.size(), MPI_CHAR, 0, pid, MPI_COMM_WORLD, &req);
-      MPI_Isend(intMap, masterMap.size(), MPI_INT, 0, pid, MPI_COMM_WORLD, &req);
+      //MPI_Request req;
+      MPI_Send(&mapSize, 1, MPI_INT, 0, pid, MPI_COMM_WORLD);
+      MPI_Send(strMap, masterMap.size(), MPI_CHAR, 0, pid, MPI_COMM_WORLD);
+      MPI_Send(intMap, masterMap.size(), MPI_INT, 0, pid, MPI_COMM_WORLD);
    } else {
       //#pragma omp parallel for
       for (int i = 1; i < numP; i++) {
          int mapSize;
          char **strMap;
          int *intMap;
-         MPI_Request req;
-         MPI_Irecv(&mapSize, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
-         MPI_Irecv(strMap, mapSize, MPI_CHAR, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
-         MPI_Irecv(intMap, mapSize, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         MPI_Status req;
+         MPI_Recv(&mapSize, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         MPI_Recv(strMap, mapSize, MPI_CHAR, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
+         MPI_Recv(intMap, mapSize, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
 
          unordered_map<string, int> map = reconstructMap(strMap, intMap, mapSize);
          free(strMap);
@@ -190,9 +190,11 @@ int main(int argc, char **argv) {
    }
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
-   cout << "PID: " << pid << endl;
-   cout << "Final Master Map length: " << masterMap.size() << endl;
-   cout << "Final Execution time: " << time+omp_get_wtime() << endl;
-
-   return(EXIT_SUCCESS);
+   if (pid == 0){
+     cout << "PID: " << pid << endl;
+     cout << "Final Master Map length: " << masterMap.size() << endl;
+     cout << "Final Execution time: " << time+omp_get_wtime() << endl;
+   
+     return(EXIT_SUCCESS);
+   }
 }
