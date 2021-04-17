@@ -106,7 +106,7 @@ void PrintArr(char **arr, int len) {
 }
 
 int main(int argc, char **argv) {
-   const int NUM_FILES = 14;
+   const int NUM_FILES = 112;
    const int NUM_MAPS = omp_get_num_threads();
    queue<string> words;
    unordered_map<string, int> masterMap;

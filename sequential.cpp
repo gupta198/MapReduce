@@ -10,7 +10,7 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-   const int NUM_FILES = 14;
+   const int NUM_FILES = 112;
    unordered_map<string, int> map;
    double time = -omp_get_wtime();
 
