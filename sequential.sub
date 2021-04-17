@@ -1,0 +1,4 @@
+#!/bin/bash
+# FILENAME:  sequential.sub
+
+./sequential
