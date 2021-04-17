@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
    
    if (pid == 0) {
       numToProc = NUM_FILES / numP;
-      numExtra = NUM_FILES % numP;
+      //numExtra = NUM_FILES % numP;
       
       //if the pid is <= numExtra, then it needs to process numToProc + 1
       //else it needs to prcess numToProc
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
          }*/
          //pass file i to process (i % nump)
       }
-      numToProc += numExtra;
+      //numToProc += numExtra;
    } else {
       MPI_Status Stat;
       MPI_Recv(&numToProc, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Stat);
@@ -149,8 +149,8 @@ int main(int argc, char **argv) {
 
 
    //1 reader per file
-   #pragma omp parallel for //nowait
-   for (int i = numToProc * pid + 1; i < numToProc * (pid + 1) + 1; i++) {
+   #pragma omp parallel for schedule(guided) //nowait
+   for (int i = numToProc * pid + 1; i < NUM_FILES; i++) {
       //cout << i << ".txt is running." << endl;
       //cout << omp_get_thread_num() << endl;
       //#pragma omp critical
@@ -162,6 +162,7 @@ int main(int argc, char **argv) {
       //cout << "lines in queue: " << words.size() << endl;
    }
    if (pid == 0) {
+      #pragma omp parallel for schedule(guided)
       for (int i = numP * numToProc + 1; i <= NUM_FILES; i++) {
          ostringstream stream;
          stream << "files/" << 15 - i << ".txt";
