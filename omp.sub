@@ -4,4 +4,4 @@
 #SBATCH --ntasks=20
 #SBATCH --time=00:01:00
 
-./main
+./omp
