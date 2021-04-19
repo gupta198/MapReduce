@@ -15,16 +15,20 @@ void Reader(string fileName, queue<string> *words) {
    ifstream file;
    file.open(fileName);
    string text;
-
-   while (getline(file, text)) {
+   if (file) {
+     ostringstream ss;
+     ss << file.rdbuf();
+     text = ss.str();
+   }
+   //while (getline(file, text)) {
       #pragma omp critical
       words->push(text);
-   }
+   //}
    file.close();
 }
 
 unordered_map<string, int> Mapper(queue<string> *words) {
-   cout << words->size() << endl;
+   //cout << words->size() << endl;
    unordered_map<string, int> map;
    while (!words->empty()) {
       string wrd;
@@ -45,9 +49,17 @@ unordered_map<string, int> Mapper(queue<string> *words) {
 }
 
 void ReduceMapper(unordered_map<string,int> *map, unordered_map<string, int> *masterMap) {
+   unordered_map<string,int>::iterator it;
+   
    for (auto i : *map) {
-      #pragma omp atomic
-      (*masterMap)[i.first] += i.second;
+      it = (*masterMap).find(i.first);
+      if (it != (*masterMap).end()) {
+        #pragma omp atomic
+        it->second += i.second;
+      } else {
+        #pragma omp critical
+        (*masterMap)[i.first] += i.second;
+      }
    }
 }
 
@@ -106,16 +118,19 @@ void PrintArr(char **arr, int len) {
 }
 
 int main(int argc, char **argv) {
-   const int NUM_FILES = 112;
-   const int NUM_MAPS = omp_get_num_threads();
+   const int NUM_FILES = 1000;
+   const int threads = 20;
+   const int NUM_MAPS = threads;
    queue<string> words;
    unordered_map<string, int> masterMap;
    unordered_map<string, int> map[NUM_MAPS];
-
    int pid, numP, N;
+   
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &numP);
    MPI_Comm_rank(MPI_COMM_WORLD, &pid);
+   
+   
    //cout << "numP = " << numP << endl;
 
    double time = -omp_get_wtime();
@@ -124,6 +139,7 @@ int main(int argc, char **argv) {
    
    if (pid == 0) {
       numToProc = NUM_FILES / numP;
+      //MPI_Request req;
       //numExtra = NUM_FILES % numP;
       
       //if the pid is <= numExtra, then it needs to process numToProc + 1
@@ -156,7 +172,7 @@ int main(int argc, char **argv) {
       //#pragma omp critical
       //cout << "PID " << pid << " :" << i << endl; 
       ostringstream stream;
-      stream << "files/" << 15 - i << ".txt";
+      stream << "files/" << i << ".txt";
       string filename = stream.str();
       Reader(filename, &words);
       //cout << "lines in queue: " << words.size() << endl;
@@ -165,34 +181,33 @@ int main(int argc, char **argv) {
       #pragma omp parallel for schedule(guided)
       for (int i = numP * numToProc + 1; i <= NUM_FILES; i++) {
          ostringstream stream;
-         stream << "files/" << 15 - i << ".txt";
+         stream << "files/" << i << ".txt";
          string filename = stream.str();
          //cout << filename << endl;
          Reader(filename, &words);
       }
    }
+   double timeRead = time + omp_get_wtime();
+   cout << "PID: " << pid << " finished Reading Files... Time taken was " << timeRead << endl;
    //remove this barrier 
-   #pragma omp parallel
-   {
-      #pragma omp single
-      for (int i = 0; i < NUM_MAPS; i++) {
-         #pragma omp task
-         {
-            map[i] = Mapper(&words);
+   #pragma omp parallel for
+   for (int i = 0; i < NUM_MAPS; i++) {
+      map[i] = Mapper(&words);
             //cout << "map length: " << map[i].size() << endl;
-         }
-      }
    }
    /*if (pid != 0) {
                          //MPI_INT, int
       MPI_Isend(&map, 1, sizeof(unordered_map<string, int>)
    }*/
+   cout << "PID: " << pid << " finished mapping queue... Time taken was " << time+omp_get_wtime()-timeRead << endl << endl;
    //barrier
+   masterMap = map[0];
    #pragma omp parallel for
-   for (int i = 0; i < NUM_MAPS; i++) {
+   for (int i = 1; i < NUM_MAPS; i++) {
       ReduceMapper(&map[i], &masterMap);
    }
-   cout << "PID: " << pid << endl;
+   
+   cout << "PID: " << pid << " is done reducing." <<  endl;
    cout << "Master Map length: " << masterMap.size() << endl;
    cout << "Execution time: " << time+omp_get_wtime() << endl << endl;
 
@@ -240,7 +255,8 @@ int main(int argc, char **argv) {
       /*for (auto i : masterMap) {
          cout << i.first << ": " << i.second << endl;
       }*/
-     cout << "PID: " << pid << endl;
+     cout << endl << endl << endl << "**MPI Implementation**" << endl << "Number of Processes: " << numP << endl << "Number of Threads Per Process: " << NUM_MAPS << endl;
+     //cout << "PID: " << pid << endl;
      cout << "Final Master Map length: " << masterMap.size() << endl;
      cout << "Final Execution time: " << time+omp_get_wtime() << endl;
    
