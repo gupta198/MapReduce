@@ -10,7 +10,7 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-   const int NUM_FILES = 112;
+   const int NUM_FILES = 1000;
    unordered_map<string, int> map;
    double time = -omp_get_wtime();
 
@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
    }
 
    time += omp_get_wtime();
+   cout << "**Sequential Execution**" << endl;
    cout << "Map length is: " << map.size() << endl;
    cout << "Time taken: " << time << endl;
    return(EXIT_SUCCESS);
