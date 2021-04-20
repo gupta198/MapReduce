@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
 
    //1 reader per file
    #pragma omp parallel for schedule(guided) //nowait
-   for (int i = numToProc * pid + 1; i < NUM_FILES; i++) {
+   for (int i = numToProc * pid + 1; i < numToProc * (pid + 1); i++) {
       //cout << i << ".txt is running." << endl;
       //cout << omp_get_thread_num() << endl;
       //#pragma omp critical
