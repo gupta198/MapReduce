@@ -1,0 +1,78 @@
+PID: 6 finished Reading Files... Time taken was 0.438622
+PID: 5 finished Reading Files... Time taken was 0.586704
+PID: 8 finished Reading Files... Time taken was 0.611165
+PID: 1 finished Reading Files... Time taken was 0.611676
+PID: 4 finished Reading Files... Time taken was 0.612234
+PID: 2 finished Reading Files... Time taken was 0.616299
+PID: 3 finished Reading Files... Time taken was 0.617924
+PID: 7 finished Reading Files... Time taken was 0.683799
+PID: 9 finished Reading Files... Time taken was 0.68772
+PID: 0 finished Reading Files... Time taken was 0.688526
+PID: 6 finished mapping queue... Time taken was 2.08701
+
+PID: 6 is done reducing.
+Master Map length: 96210
+Execution time: 2.53357
+
+PID: 5 finished mapping queue... Time taken was 2.01295
+
+PID: 5 is done reducing.
+Master Map length: 96210
+Execution time: 2.60748
+
+PID: 8 finished mapping queue... Time taken was 2.01057
+
+PID: 4 finished mapping queue... Time taken was 2.01454
+
+PID: 8 is done reducing.
+Master Map length: 96210
+Execution time: 2.6305
+
+PID: 4 is done reducing.
+Master Map length: 96210
+Execution time: 2.63436
+
+PID: 1 finished mapping queue... Time taken was 2.04372
+
+PID: 2 finished mapping queue... Time taken was 2.03935
+
+PID: 1 is done reducing.
+Master Map length: 96210
+Execution time: 2.66383
+
+PID: 2 is done reducing.
+Master Map length: 96210
+Execution time: 2.66416
+
+PID: 3 finished mapping queue... Time taken was 2.04654
+
+PID: 3 is done reducing.
+Master Map length: 96210
+Execution time: 2.67303
+
+PID: 7 finished mapping queue... Time taken was 2.00089
+
+PID: 7 is done reducing.
+Master Map length: 96210
+Execution time: 2.69251
+
+PID: 9 finished mapping queue... Time taken was 2.01795
+
+PID: 9 is done reducing.
+Master Map length: 96210
+Execution time: 2.7148
+
+PID: 0 finished mapping queue... Time taken was 2.15846
+
+PID: 0 is done reducing.
+Master Map length: 96210
+Execution time: 2.85575
+
+
+
+
+**MPI Implementation**
+Number of Processes: 10
+Number of Threads Per Process: 1
+Final Master Map length: 96210
+Final Execution time: 3.70485

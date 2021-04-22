@@ -1,0 +1,10 @@
+Queue size: 1000
+All files Read.... Time taken to Read Files: 0.912192
+Finished Mapping Queue... Time taken to Map Queue: 14.6954
+Finished Reducing Maps...
+
+
+**OpenMP Implementation**
+Number of threads: 20
+Master Map length: 96210
+Execution time: 15.6669

@@ -1,0 +1,29 @@
+PID: 1 finished Reading Files... Time taken was 0.4613
+PID: 0 finished Reading Files... Time taken was 0.669744
+PID: 2 finished Reading Files... Time taken was 0.708609
+PID: 1 finished mapping queue... Time taken was 5.33363
+
+PID: 0 finished mapping queue... Time taken was 5.15633
+
+PID: 1 is done reducing.
+Master Map length: 96210
+Execution time: 5.84281
+
+PID: 0 is done reducing.
+Master Map length: 96210
+Execution time: 5.87443
+
+PID: 2 finished mapping queue... Time taken was 5.46161
+
+PID: 2 is done reducing.
+Master Map length: 96210
+Execution time: 6.22456
+
+
+
+
+**MPI Implementation**
+Number of Processes: 3
+Number of Threads Per Process: 10
+Final Master Map length: 96210
+Final Execution time: 6.36362
