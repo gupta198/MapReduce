@@ -19,10 +19,8 @@ void Reader(string fileName, queue<string> *words) {
      ss << file.rdbuf();
      text = ss.str();
    }
-  // while (getline(file, text)) {
       #pragma omp critical
       words->push(text);
-  // }
    file.close();
 }
 
@@ -69,29 +67,24 @@ int main(int argc, char **argv) {
 
    double time = -omp_get_wtime();
 
-   //1 reader per file
-   #pragma omp parallel for //nowait
+  
+   #pragma omp parallel for
    for (int i = 1; i <= NUM_FILES; i++) {
-      //cout << i << ".txt is running." << endl;
-      //cout << omp_get_thread_num() << endl;
       ostringstream stream;
       stream << "files/" << i << ".txt";
       string fileName = stream.str();
       Reader(fileName, &words);
-      //cout << "Lines in Queue: " << words.size() << endl;
    }
-   //remove this barrier
+
    double timeRead = time + omp_get_wtime();
    cout << "Queue size: " << words.size() << endl;
    cout << "All files Read.... Time taken to Read Files: " << timeRead << endl; 
    #pragma omp parallel for
       for (int i = 0; i < NUM_MAPS; i++) {
             map[i] = Mapper(&words);
-            //cout << "Map length: " << map[i].size() << endl;
       }
-   //barrier
+
    cout << "Finished Mapping Queue... Time taken to Map Queue: " << time + omp_get_wtime()-timeRead << endl;
-   //cout << "Execution time: " << time+omp_get_wtime() << endl;
    masterMap = map[0];
    #pragma omp parallel for
    for (int i = 1; i < NUM_MAPS; i++) {
